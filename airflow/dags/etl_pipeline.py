@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-import logging
 
 # ---------------------------------------------------------------------------
 # Configuration
