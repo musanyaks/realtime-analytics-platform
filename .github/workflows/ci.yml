@@ -106,4 +106,4 @@ jobs:
         run: docker build -t r-analytics-test ./r_analytics
 
       - name: Docker Compose config check
-        run: docker-compose config
+        run: docker compose config
