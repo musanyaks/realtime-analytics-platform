@@ -67,6 +67,15 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Check secrets exist
+        run: |
+          if [ -z "${{ secrets.SNOWFLAKE_ACCOUNT }}" ]; then
+            echo "ERROR: SNOWFLAKE_ACCOUNT secret is not set!"
+            echo "Please add all 6 Snowflake secrets in GitHub Settings."
+            exit 1
+          fi
+          echo "Snowflake secrets are configured."
+
       - name: Install dbt (with protobuf fix)
         run: |
           pip install dbt-core==1.7.9 dbt-snowflake==1.7.3 protobuf==4.25.3

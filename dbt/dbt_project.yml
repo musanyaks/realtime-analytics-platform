@@ -27,10 +27,6 @@ models:
       +materialized: table
       +schema: marts
       +tags: ["marts", "daily"]
-      core:
-        +tags: ["core"]
-      aggregates:
-        +tags: ["aggregates"]
 
 vars:
   run_date: "2024-01-01"
