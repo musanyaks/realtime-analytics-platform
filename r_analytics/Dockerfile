@@ -1,6 +1,5 @@
 FROM rocker/shiny-verse:4.3.2
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
@@ -14,32 +13,11 @@ RUN apt-get update && apt-get install -y \
     gfortran \
     && rm -rf /var/lib/apt/lists/*
 
-# Install R packages
 RUN install2.r --error --skipinstalled \
-    shiny \
-    shinydashboard \
-    plotly \
-    DT \
-    dplyr \
-    dbplyr \
-    DBI \
-    odbc \
-    sparklyr \
-    kafka \
-    jsonlite \
-    lubridate \
-    rmarkdown \
-    knitr \
-    kableExtra \
-    ggplot2 \
-    tidyr \
-    scales \
-    config \
-    logger \
-    testthat \
-    lintr
+    shiny shinydashboard plotly DT dplyr dbplyr DBI odbc sparklyr \
+    kafka jsonlite lubridate rmarkdown knitr kableExtra ggplot2 \
+    tidyr scales config logger testthat lintr
 
-# Copy app
 COPY . /app
 WORKDIR /app
 

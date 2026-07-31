@@ -28,7 +28,7 @@ snowflake_connect <- function(
     account   = Sys.getenv("SNOWFLAKE_ACCOUNT"),
     user      = Sys.getenv("SNOWFLAKE_USER"),
     password  = Sys.getenv("SNOWFLAKE_PASSWORD"),
-    database  = Sys.getenv("SNOWFLAKE_DATABASE", "ANALYTICS_DB"),
+    database  = Sys.getenv("SNOWFLAKE_DATABASE", "ANALYTICS"),
     schema    = Sys.getenv("SNOWFLAKE_SCHEMA", "PROD"),
     warehouse = Sys.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH"),
     role      = Sys.getenv("SNOWFLAKE_ROLE", "ACCOUNTADMIN"),

@@ -23,7 +23,7 @@ con <- dbConnect(odbc::odbc(),
   Server    = paste0(Sys.getenv("SNOWFLAKE_ACCOUNT"), ".snowflakecomputing.com"),
   UID       = Sys.getenv("SNOWFLAKE_USER"),
   PWD       = Sys.getenv("SNOWFLAKE_PASSWORD"),
-  Database  = Sys.getenv("SNOWFLAKE_DATABASE", "ANALYTICS_DB"),
+  Database  = Sys.getenv("SNOWFLAKE_DATABASE", "ANALYTICS"),
   Schema    = Sys.getenv("SNOWFLAKE_SCHEMA", "PROD"),
   Warehouse = Sys.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH")
 )
