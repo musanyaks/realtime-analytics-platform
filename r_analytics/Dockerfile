@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN install2.r --error --skipinstalled \
     shiny shinydashboard plotly DT dplyr dbplyr DBI odbc sparklyr \
-    kafka jsonlite lubridate rmarkdown knitr kableExtra ggplot2 \
+    jsonlite lubridate rmarkdown knitr kableExtra ggplot2 \
     tidyr scales config logger testthat lintr
 
 COPY . /app
