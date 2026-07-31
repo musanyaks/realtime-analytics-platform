@@ -1,0 +1,82 @@
+---
+title: "Daily Analytics Report"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: darkly
+    highlight: tango
+params:
+  run_date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(DBI)
+library(odbc)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(scales)
+
+con <- dbConnect(odbc::odbc(),
+  Driver    = "Snowflake",
+  Server    = paste0(Sys.getenv("SNOWFLAKE_ACCOUNT"), ".snowflakecomputing.com"),
+  UID       = Sys.getenv("SNOWFLAKE_USER"),
+  PWD       = Sys.getenv("SNOWFLAKE_PASSWORD"),
+  Database  = Sys.getenv("SNOWFLAKE_DATABASE", "ANALYTICS_DB"),
+  Schema    = Sys.getenv("SNOWFLAKE_SCHEMA", "PROD"),
+  Warehouse = Sys.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH")
+)
+```
+
+## Executive Summary
+
+Report generated for: **`r params$run_date`**
+
+```{r summary}
+summary <- dbGetQuery(con, sprintf("
+  SELECT
+    SUM(total_events) as total_events,
+    SUM(unique_users) as unique_users,
+    SUM(revenue) as total_revenue,
+    AVG(conversion_rate) as avg_conversion
+  FROM PROD.FCT_HOURLY_METRICS
+  WHERE event_date = '%s'
+", params$run_date))
+
+summary %>%
+  kbl(col.names = c("Total Events", "Unique Users", "Revenue", "Avg Conversion")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+## Hourly Breakdown
+
+```{r hourly_plot}
+hourly <- dbGetQuery(con, sprintf("
+  SELECT * FROM PROD.FCT_HOURLY_METRICS
+  WHERE event_date = '%s'
+  ORDER BY event_hour
+", params$run_date))
+
+ggplot(hourly, aes(x = event_hour, y = revenue)) +
+  geom_col(fill = "#00d2ff") +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(title = "Hourly Revenue", x = "Hour", y = "Revenue") +
+  theme_minimal()
+```
+
+## Top Performing Segments
+
+```{r segments}
+segments <- dbGetQuery(con, "
+  SELECT user_segment, COUNT(*) as users, AVG(lifetime_value) as avg_ltv
+  FROM PROD.DIM_USERS
+  GROUP BY user_segment
+")
+
+segments %>% kbl() %>% kable_styling()
+```
+
+```{r cleanup}
+dbDisconnect(con)
+```

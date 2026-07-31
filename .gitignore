@@ -1,0 +1,119 @@
+# =============================================================================
+# Real-Time Analytics Platform - .gitignore
+# =============================================================================
+
+# Environment & Secrets
+# ---------------------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+config/local*
+
+# Airflow
+# -------
+airflow/logs/
+airflow/plugins/
+airflow/*.pid
+airflow/airflow.cfg
+airflow/airflow.db
+airflow/webserver_config.py
+airflow/__pycache__/
+airflow/dags/__pycache__/
+airflow/dags/**/*.pyc
+
+# dbt
+# ---
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt/.user.yml
+dbt/package-lock.yml
+
+# Spark
+# -----
+spark/metastore_db/
+spark/derby.log
+spark/checkpoints/
+spark/spark-warehouse/
+*.checkpoint
+
+# Kafka
+# -----
+kafka/data/
+kafka/logs/
+
+# Snowflake
+# ---------
+snowflake/*.csv
+snowflake/*.json
+snowflake/exports/
+
+# R / Shiny
+# ---------
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+r_analytics/rsconnect/
+r_analytics/output/
+*.html
+*.pdf
+r_analytics/reports/*.html
+r_analytics/reports/*.pdf
+
+# Python
+# ------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Docker
+# ------
+*.tar
+*.img
+
+# IDE
+# ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+# --
+Thumbs.db
+
+# Data / Outputs
+# --------------
+output/
+data/
+tmp/
+temp/
+*.parquet
+*.avro
+*.orc

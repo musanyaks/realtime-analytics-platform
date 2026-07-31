@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: raw_events
+    database: "{{ env_var('DBT_SNOWFLAKE_DATABASE') }}"
+    schema: raw
+    tables:
+      - name: kafka_events
+        description: "Raw events ingested from Kafka via Spark Streaming"
+        columns:
+          - name: event_id
+            description: "Unique event identifier"
+            tests:
+              - unique
+              - not_null
+          - name: event_timestamp
+            description: "Timestamp when the event occurred"
+            tests:
+              - not_null
+          - name: user_id
+            description: "Anonymous user identifier"
+          - name: event_type
+            description: "Type of event (click, purchase, view, etc.)"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['click', 'purchase', 'view', 'add_to_cart', 'checkout']
+          - name: session_id
+            description: "Session identifier"
+          - name: page_url
+            description: "URL of the page where event occurred"
+          - name: device_type
+            description: "Device type (mobile, desktop, tablet)"
+          - name: country
+            description: "User country based on IP"
+          - name: amount
+            description: "Transaction amount (for purchase events)"
+
+      - name: batch_aggregates
+        description: "Hourly batch aggregates from Spark batch processing"
+        columns:
+          - name: hour_window
+            description: "Hourly time window"
+            tests:
+              - unique
+              - not_null
+          - name: total_events
+            description: "Total events in the hour"
+          - name: unique_users
+            description: "Unique users in the hour"
+          - name: total_revenue
+            description: "Total revenue in the hour"

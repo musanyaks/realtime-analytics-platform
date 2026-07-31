@@ -1,0 +1,10 @@
+apache-airflow==2.8.1
+dbt-core==1.7.0
+dbt-snowflake==1.7.0
+apache-airflow-providers-snowflake
+apache-airflow-providers-http
+pandas==2.1.4
+pyarrow==14.0.1
+snowflake-connector-python==3.6.0
+requests==2.31.0
+python-dotenv==1.0.0
