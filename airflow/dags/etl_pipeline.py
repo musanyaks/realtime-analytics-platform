@@ -12,10 +12,7 @@ Orchestrates the full data pipeline:
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
-from airflow.utils.task_group import TaskGroup
-from airflow.models import Variable
 import logging
 
 # ---------------------------------------------------------------------------
@@ -69,7 +66,11 @@ with DAG(
     produce_events = BashOperator(
         task_id="produce_kafka_events",
         bash_command="""
-            Rscript /opt/airflow/r_analytics/utils/kafka_connector.R                 --mode=produce                 --bootstrap-servers=kafka:9092                 --topic=user_events                 --batch-size=1000
+            Rscript /opt/airflow/r_analytics/utils/kafka_connector.R \
+                --mode=produce \
+                --bootstrap-servers=kafka:9092 \
+                --topic=user_events \
+                --batch-size=1000
         """,
         env={
             "KAFKA_BOOTSTRAP_SERVERS": "kafka:9092",
@@ -83,7 +84,17 @@ with DAG(
     spark_streaming = BashOperator(
         task_id="spark_streaming_processing",
         bash_command="""
-            timeout 300             /opt/spark/bin/spark-submit                 --master spark://spark-master:7077                 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,net.snowflake:snowflake-jdbc:3.14.3,net.snowflake:spark-snowflake_2.12:2.12.0                 --driver-memory 2g                 --executor-memory 2g                 /opt/spark/work-dir/streaming_processing.R                 --kafka-bootstrap kafka:9092                 --snowflake-url "$SNOWFLAKE_ACCOUNT"                 --snowflake-db "$SNOWFLAKE_DATABASE"                 --snowflake-schema "$SNOWFLAKE_SCHEMA"
+            timeout 300 \
+            /opt/spark/bin/spark-submit \
+                --master spark://spark-master:7077 \
+                --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,net.snowflake:snowflake-jdbc:3.14.3,net.snowflake:spark-snowflake_2.12:2.12.0 \
+                --driver-memory 2g \
+                --executor-memory 2g \
+                /opt/spark/work-dir/streaming_processing.R \
+                --kafka-bootstrap kafka:9092 \
+                --snowflake-url "$SNOWFLAKE_ACCOUNT" \
+                --snowflake-db "$SNOWFLAKE_DATABASE" \
+                --snowflake-schema "$SNOWFLAKE_SCHEMA"
         """,
         env={
             "SNOWFLAKE_ACCOUNT": "{{ var.value.snowflake_account }}",
@@ -101,7 +112,15 @@ with DAG(
     spark_batch = BashOperator(
         task_id="spark_batch_processing",
         bash_command="""
-            /opt/spark/bin/spark-submit                 --master spark://spark-master:7077                 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,net.snowflake:snowflake-jdbc:3.14.3,net.snowflake:spark-snowflake_2.12:2.12.0                 --driver-memory 4g                 --executor-memory 4g                 --executor-cores 2                 /opt/spark/work-dir/batch_processing.R                 --run-date {{ ds }}                 --snowflake-db "$SNOWFLAKE_DATABASE"
+            /opt/spark/bin/spark-submit \
+                --master spark://spark-master:7077 \
+                --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,net.snowflake:snowflake-jdbc:3.14.3,net.snowflake:spark-snowflake_2.12:2.12.0 \
+                --driver-memory 4g \
+                --executor-memory 4g \
+                --executor-cores 2 \
+                /opt/spark/work-dir/batch_processing.R \
+                --run-date {{ ds }} \
+                --snowflake-db "$SNOWFLAKE_DATABASE"
         """,
         env={
             "SNOWFLAKE_ACCOUNT": "{{ var.value.snowflake_account }}",
@@ -119,7 +138,7 @@ with DAG(
     data_quality_check = SnowflakeOperator(
         task_id="data_quality_check",
         sql="""
-            SELECT 
+            SELECT
                 COUNT(*) as total_records,
                 COUNT(DISTINCT user_id) as unique_users,
                 MAX(event_timestamp) as latest_event
@@ -136,7 +155,13 @@ with DAG(
     dbt_run = BashOperator(
         task_id="dbt_run_models",
         bash_command="""
-            cd /opt/airflow/dbt &&             dbt deps --profiles-dir . &&             dbt run                 --profiles-dir .                 --target prod                 --vars '{"run_date": "{{ ds }}"}'                 --full-refresh
+            cd /opt/airflow/dbt && \
+            dbt deps --profiles-dir . && \
+            dbt run \
+                --profiles-dir . \
+                --target prod \
+                --vars '{\"run_date\": \"{{ ds }}\"}' \
+                --full-refresh
         """,
         env={
             "DBT_SNOWFLAKE_ACCOUNT": "{{ var.value.snowflake_account }}",
@@ -154,7 +179,11 @@ with DAG(
     dbt_test = BashOperator(
         task_id="dbt_run_tests",
         bash_command="""
-            cd /opt/airflow/dbt &&             dbt test                 --profiles-dir .                 --target prod                 --vars '{"run_date": "{{ ds }}"}'
+            cd /opt/airflow/dbt && \
+            dbt test \
+                --profiles-dir . \
+                --target prod \
+                --vars '{\"run_date\": \"{{ ds }}\"}'
         """,
         env={
             "DBT_SNOWFLAKE_ACCOUNT": "{{ var.value.snowflake_account }}",
@@ -172,28 +201,15 @@ with DAG(
     generate_report = BashOperator(
         task_id="generate_daily_report",
         bash_command="""
-            Rscript -e "
+            Rscript -e \"
                 rmarkdown::render(
                     input = '/opt/airflow/r_analytics/reports/daily_report.Rmd',
                     output_file = '/opt/airflow/output/daily_report_{{ ds }}.html',
                     params = list(run_date = '{{ ds }}')
                 )
-            "
+            \"
         """,
     )
-
-    # =====================================================================
-    # Task 8: Cleanup & Notifications
-    # =====================================================================
-    def _notify_success(context):
-        """Send success notification."""
-        ti = context["ti"]
-        logging.info(f"Pipeline completed successfully for {ti.execution_date}")
-
-    def _notify_failure(context):
-        """Send failure alert."""
-        ti = context["ti"]
-        logging.error(f"Pipeline failed at task {ti.task_id} for {ti.execution_date}")
 
     # =====================================================================
     # Dependencies

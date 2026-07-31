@@ -30,13 +30,14 @@ RUN R -e "install.packages(c(\
     'reticulate' \
     ), repos='https://cloud.r-project.org/')"
 
-# Install dbt and Snowflake adapter
-RUN pip install --no-cache-dir \
-    dbt-core==1.7.0 \
-    dbt-snowflake==1.7.0 \
+USER airflow
+
+# Install Python packages as airflow user
+RUN pip install --no-cache-dir --user \
+    dbt-core==1.7.9 \
+    dbt-snowflake==1.7.3 \
     apache-airflow-providers-snowflake \
     pyarrow \
     pandas \
-    snowflake-connector-python
-
-USER airflow
+    snowflake-connector-python \
+    protobuf==4.25.3

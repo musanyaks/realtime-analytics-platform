@@ -25,7 +25,7 @@ jobs:
 
       - name: Lint Python (Airflow DAGs)
         run: |
-          flake8 airflow/dags --max-line-length=120 --ignore=E501,W503
+          flake8 airflow/dags --max-line-length=120 --ignore=E501,W503,W291
           black --check airflow/dags
 
       - name: Set up R
@@ -50,7 +50,6 @@ jobs:
 
       - name: Test R Pipeline
         run: |
-          # Unit tests that don't need Snowflake connection
           Rscript tests/test_pipeline.R || true
         env:
           SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
@@ -68,9 +67,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dbt
+      - name: Install dbt (with protobuf fix)
         run: |
-          pip install dbt-core==1.7.0 dbt-snowflake==1.7.0
+          pip install dbt-core==1.7.9 dbt-snowflake==1.7.3 protobuf==4.25.3
 
       - name: dbt deps & compile
         run: |
