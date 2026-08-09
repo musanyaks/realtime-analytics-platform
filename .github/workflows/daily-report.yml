@@ -2,8 +2,8 @@ name: Daily Report Generation
 
 on:
   schedule:
-    - cron: '0 6 * * *'      # Daily at 6 AM UTC
-  workflow_dispatch:           # Manual trigger
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   generate-report:
@@ -32,7 +32,6 @@ jobs:
         run: |
           Rscript -e "install.packages(c('rmarkdown', 'knitr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT', 'sparklyr', 'dbplyr'))"
 
-      # FIX: Create output directory before rendering
       - name: Create output directory
         run: mkdir -p output
 
