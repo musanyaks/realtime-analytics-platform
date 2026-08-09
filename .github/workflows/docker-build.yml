@@ -27,10 +27,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # FIX: R was missing — must set up R before running Rscript
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3.0'
+
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION') }}
+          restore-keys: ${{ runner.os }}-r-
+
+      - name: Install lintr
+        run: Rscript -e "install.packages('lintr')"
+
       - name: Lint R code
-        run: |
-          Rscript -e "install.packages('lintr')"
-          Rscript -e "lintr::lint_dir('r_analytics')"
+        run: Rscript -e "lintr::lint_dir('r_analytics')"
 
       - name: Run R tests
         run: Rscript tests/test_pipeline.R
