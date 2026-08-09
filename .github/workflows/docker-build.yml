@@ -1,0 +1,68 @@
+name: Docker Build Check
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'docker-compose.yml'
+      - '**/Dockerfile'
+      - '.github/workflows/docker-build.yml'
+  pull_request:
+    paths:
+      - 'docker-compose.yml'
+      - '**/Dockerfile'
+  workflow_dispatch:
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint R code
+        run: |
+          Rscript -e "install.packages('lintr')"
+          Rscript -e "lintr::lint_dir('r_analytics')"
+
+      - name: Run R tests
+        run: Rscript tests/test_pipeline.R
+
+  dbt-compile:
+    name: dbt Compile Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dbt
+        run: pip install dbt-core dbt-snowflake
+
+      - name: Compile dbt models
+        working-directory: ./dbt
+        run: dbt compile
+        env:
+          DBT_PROFILES_DIR: .
+
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker Compose config check
+        run: docker compose config
+
+      - name: Build images
+        run: docker compose build
+
+      - name: Test containers start
+        run: |
+          docker compose up -d
+          sleep 30
+          docker compose ps
+          docker compose down
