@@ -8,7 +8,18 @@ on:
 
 jobs:
   test:
+    name: Lint & Test
     runs-on: ubuntu-latest
+    env:
+      # Dummy Snowflake credentials so env-var presence checks pass.
+      # Actual connection tests are skipped when these are dummy values.
+      SNOWFLAKE_ACCOUNT: "dummy_account"
+      SNOWFLAKE_USER: "dummy_user"
+      SNOWFLAKE_PASSWORD: "dummy_password"
+      SNOWFLAKE_DATABASE: "dummy_db"
+      SNOWFLAKE_SCHEMA: "dummy_schema"
+      SNOWFLAKE_WAREHOUSE: "dummy_wh"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,6 +30,13 @@ jobs:
 
       - name: Set up Pandoc
         uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION', '**/renv.lock') }}
+          restore-keys: ${{ runner.os }}-r-
 
       - name: Install dependencies
         run: |
@@ -38,10 +56,13 @@ jobs:
             params=list(run_date=Sys.Date()))"
 
   docker:
+    name: Docker Build Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Docker Compose config check
         run: docker compose config
+
       - name: Build images
         run: docker compose build
