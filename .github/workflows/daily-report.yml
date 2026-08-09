@@ -32,9 +32,7 @@ jobs:
         run: |
           Rscript -e "install.packages(c('rmarkdown', 'knitr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT', 'sparklyr', 'dbplyr'))"
 
-      # ============================================================
-      # FIX: Create the output directory before rendering
-      # ============================================================
+      # FIX: Create output directory before rendering
       - name: Create output directory
         run: mkdir -p output
 
@@ -51,7 +49,6 @@ jobs:
           path: output/daily_report.html
           retention-days: 30
 
-      # Optional: Commit the report back to the repo
       - name: Commit report to repository
         if: github.ref == 'refs/heads/main'
         run: |
