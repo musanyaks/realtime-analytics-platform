@@ -2,8 +2,8 @@ name: Daily Report Generation
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # Daily at 6 AM UTC — adjust as needed
-  workflow_dispatch:        # Allows manual trigger
+    - cron: '0 6 * * *'      # Daily at 6 AM UTC
+  workflow_dispatch:           # Manual trigger
 
 jobs:
   generate-report:
@@ -21,10 +21,20 @@ jobs:
       - name: Set up Pandoc
         uses: r-lib/actions/setup-pandoc@v2
 
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION') }}
+          restore-keys: ${{ runner.os }}-r-
+
       - name: Install R packages
         run: |
-          Rscript -e "install.packages(c('rmarkdown', 'knitr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT'))"
+          Rscript -e "install.packages(c('rmarkdown', 'knitr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT', 'sparklyr', 'dbplyr'))"
 
+      # ============================================================
+      # FIX: Create the output directory before rendering
+      # ============================================================
       - name: Create output directory
         run: mkdir -p output
 
@@ -41,7 +51,8 @@ jobs:
           path: output/daily_report.html
           retention-days: 30
 
-      - name: Commit report to repository (optional)
+      # Optional: Commit the report back to the repo
+      - name: Commit report to repository
         if: github.ref == 'refs/heads/main'
         run: |
           git config --local user.email "action@github.com"
