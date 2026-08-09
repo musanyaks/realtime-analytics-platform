@@ -17,6 +17,13 @@ jobs:
   lint-and-test:
     name: Lint & Test
     runs-on: ubuntu-latest
+    env:
+      SNOWFLAKE_ACCOUNT: "dummy_account"
+      SNOWFLAKE_USER: "dummy_user"
+      SNOWFLAKE_PASSWORD: "dummy_password"
+      SNOWFLAKE_DATABASE: "dummy_db"
+      SNOWFLAKE_SCHEMA: "dummy_schema"
+      SNOWFLAKE_WAREHOUSE: "dummy_wh"
     steps:
       - uses: actions/checkout@v4
 
