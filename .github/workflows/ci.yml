@@ -11,8 +11,6 @@ jobs:
     name: Lint & Test
     runs-on: ubuntu-latest
     env:
-      # Dummy Snowflake credentials so env-var presence checks pass.
-      # Actual connection tests are skipped when these are dummy values.
       SNOWFLAKE_ACCOUNT: "dummy_account"
       SNOWFLAKE_USER: "dummy_user"
       SNOWFLAKE_PASSWORD: "dummy_password"
