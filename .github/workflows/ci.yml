@@ -43,8 +43,10 @@ jobs:
       - name: Lint R code
         run: Rscript -e "lintr::lint_dir('r_analytics')"
 
+      # FIX: Run from tests/ directory so ../snowflake resolves correctly
       - name: Run tests
-        run: Rscript tests/test_pipeline.R
+        working-directory: ./tests
+        run: Rscript test_pipeline.R
 
       - name: Verify report can render (dry run)
         run: |
