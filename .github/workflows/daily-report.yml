@@ -36,7 +36,7 @@ jobs:
         run: mkdir -p output
         
       - name: Install missing R package
-        run: Rscript -e 'install.packages("kableExtra")'
+        run: Rscript -e 'install.packages(c("kableExtra", "dplyr", "ggplot2"))'
 
       - name: Render Report
         run: |
