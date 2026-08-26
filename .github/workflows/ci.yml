@@ -38,25 +38,26 @@ jobs:
 
       - name: Install dependencies
         run: |
-          Rscript -e "install.packages(c('rmarkdown', 'knitr', 'testthat', 'lintr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT', 'sparklyr', 'dbplyr', 'kafka'))"
+          Rscript -e "install.packages(c('rmarkdown', 'knitr', 'testthat', 'lintr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT', 'sparklyr', 'dbplyr', 'kafka', 'kableExtra'))"
 
       - name: Lint R code
         run: Rscript -e "lintr::lint_dir('r_analytics')"
+        
       - name: Install unixODBC and Snowflake Driver
         run: |
           sudo apt-get update
           sudo apt-get install -y unixodbc unixodbc-dev
           curl -O https://sfc-repo.snowflakecomputing.com/odbc/linux/3.3.2/snowflake-odbc-3.3.2.x86_64.deb
-        
           sudo apt-get install -y ./snowflake-odbc-3.3.2.x86_64.deb
           
+          # 1. Create a symlink for libodbcinst.so.1
+          sudo ln -s /usr/lib/x86_64-linux-gnu/libodbcinst.so.2 /usr/lib/x86_64-linux-gnu/libodbcinst.so.1
+          
+          # 2. Overwrite odbcinst.ini with the correct format
           sudo bash -c 'printf "[Snowflake]\nDescription=Snowflake ODBC Driver\nDriver=/usr/lib/snowflake/odbc/lib/libSnowflake.so\n" > /etc/odbcinst.ini'
           
-          # Print files to verify they exist
-          echo "--- odbcinst.ini contents ---"
-          cat /etc/odbcinst.ini
-          echo "--- Driver folder contents ---"
-          ls -l /usr/lib/snowflake/odbc/lib/
+          # 3. Set LD_LIBRARY_PATH so the driver can find its dependencies
+          echo "LD_LIBRARY_PATH=/usr/lib/snowflake/odbc/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Run tests
         working-directory: ./tests
