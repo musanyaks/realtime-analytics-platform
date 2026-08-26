@@ -34,6 +34,9 @@ jobs:
 
       - name: Create output directory
         run: mkdir -p output
+        
+      - name: Install missing R package
+        run: Rscript -e 'install.packages("kableExtra")'
 
       - name: Render Report
         run: |
