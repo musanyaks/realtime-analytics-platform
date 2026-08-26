@@ -42,14 +42,22 @@ jobs:
 
       - name: Lint R code
         run: Rscript -e "lintr::lint_dir('r_analytics')"
-     # ADD THIS NEW STEP TO INSTALL ODBC & SNOWFLAKE DRIVER:
       - name: Install unixODBC and Snowflake Driver
         run: |
           sudo apt-get update
           sudo apt-get install -y unixodbc unixodbc-dev
           curl -O https://sfc-repo.snowflakecomputing.com/odbc/linux/3.3.2/snowflake-odbc-3.3.2.x86_64.deb
-          sudo dpkg -i snowflake-odbc-3.3.2.x86_64.deb
-      # FIX: Run from tests/ directory so ../snowflake resolves correctly
+        
+          sudo apt-get install -y ./snowflake-odbc-3.3.2.x86_64.deb
+          
+          sudo bash -c 'printf "[Snowflake]\nDescription=Snowflake ODBC Driver\nDriver=/usr/lib/snowflake/odbc/lib/libSnowflake.so\n" > /etc/odbcinst.ini'
+          
+          # Print files to verify they exist
+          echo "--- odbcinst.ini contents ---"
+          cat /etc/odbcinst.ini
+          echo "--- Driver folder contents ---"
+          ls -l /usr/lib/snowflake/odbc/lib/
+
       - name: Run tests
         working-directory: ./tests
         run: Rscript test_pipeline.R
