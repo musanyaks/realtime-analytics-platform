@@ -28,6 +28,9 @@ jobs:
           key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION') }}
           restore-keys: ${{ runner.os }}-r-
 
+      - name: Install unixODBC
+        run: sudo apt-get update && sudo apt-get install -y unixodbc unixodbc-dev
+
       - name: Install R packages
         run: |
           Rscript -e "install.packages(c('rmarkdown', 'knitr', 'dplyr', 'ggplot2', 'DBI', 'odbc', 'plotly', 'DT', 'sparklyr', 'dbplyr'))"
