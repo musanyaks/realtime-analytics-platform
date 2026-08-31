@@ -8,13 +8,7 @@ is_live_snowflake <- function() {
     Sys.getenv("SNOWFLAKE_ACCOUNT") != "dummy_account"
 }
 
-# All test_that() blocks run inside with_reporter() so we can read pass/fail
-# counts back afterwards WITHOUT re-scanning/re-sourcing this file (test_dir(".")
-# would match and re-run test_pipeline.R itself, causing infinite recursion and
-# a C stack overflow -- this is why that approach was removed).
-reporter <- SummaryReporter$new()
-
-with_reporter(reporter, {
+run_tests <- function() {
   context("Real-Time Analytics Pipeline Tests")
 
   test_that("Required environment variables are set", {
@@ -62,12 +56,30 @@ with_reporter(reporter, {
       }
     }
   })
-})
+}
 
-if (!interactive()) {
-  n_failed <- reporter$failed
-  if (n_failed > 0) {
-    message(sprintf("%d test failure(s).", n_failed))
+# Guard against self-recursion: this script previously ended with
+# `test_dir(".")`, which re-scanned this directory, matched this same file,
+# and re-sourced it -- causing infinite recursion and a C stack overflow.
+#
+# PIPELINE_TESTS_DRIVER is a sentinel we control ourselves (not testthat
+# internals), so correctness here doesn't depend on testthat's version or
+# undocumented behavior:
+#   - First run (direct `Rscript test_pipeline.R`, sentinel unset): set the
+#     sentinel, then drive the suite through test_file() exactly once to get
+#     a proper results object (with $failed counts) and a correct exit code.
+#   - Second run (this file being sourced BY that test_file() call, sentinel
+#     now set): just define and run the tests, then return control to the
+#     driver above -- do NOT recurse again.
+if (Sys.getenv("PIPELINE_TESTS_DRIVER") == "true") {
+  run_tests()
+} else {
+  Sys.setenv(PIPELINE_TESTS_DRIVER = "true")
+  this_file <- sub("^--file=", "", grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE))
+  results <- test_file(this_file, reporter = "summary")
+  df <- as.data.frame(results)
+  if (any(df$failed > 0)) {
+    message(sprintf("%d test failure(s).", sum(df$failed)))
     quit(status = 1)
   } else {
     message("All tests passed!")
