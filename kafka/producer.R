@@ -66,7 +66,7 @@ generate_event <- function() {
     device_type     = sample(DEVICES, 1, prob = c(0.45, 0.45, 0.10)),
     country         = sample(COUNTRIES, 1),
     amount          = amount,
-    _ingestion_timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    `_ingestion_timestamp` = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
   )
 }
 
