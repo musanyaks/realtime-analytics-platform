@@ -3,6 +3,13 @@ library(testthat)
 
 context("Real-Time Analytics Pipeline Tests")
 
+# Live Snowflake tests only run when real credentials are provided.
+# CI supplies dummy_* placeholders, so these are skipped there automatically.
+is_live_snowflake <- function() {
+  Sys.getenv("SNOWFLAKE_ACCOUNT") != "" &&
+    Sys.getenv("SNOWFLAKE_ACCOUNT") != "dummy_account"
+}
+
 test_that("Required environment variables are set", {
   expect_true(nchar(Sys.getenv("SNOWFLAKE_ACCOUNT")) > 0)
   expect_true(nchar(Sys.getenv("SNOWFLAKE_USER")) > 0)
@@ -10,6 +17,7 @@ test_that("Required environment variables are set", {
 })
 
 test_that("Can connect to Snowflake", {
+  skip_if_not(is_live_snowflake(), "No live Snowflake credentials available")
   source("../snowflake/connection.R")
   con <- snowflake_connect()
   on.exit(sf_disconnect(con))
@@ -18,6 +26,7 @@ test_that("Can connect to Snowflake", {
 })
 
 test_that("Production tables exist", {
+  skip_if_not(is_live_snowflake(), "No live Snowflake credentials available")
   source("../snowflake/connection.R")
   con <- snowflake_connect()
   on.exit(sf_disconnect(con))
