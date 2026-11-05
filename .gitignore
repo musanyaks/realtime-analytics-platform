@@ -4,6 +4,8 @@
 
 # Environment & Secrets
 # ---------------------
+output/*
+!output/daily_report.html
 .env
 .env.local
 .env.*.local
