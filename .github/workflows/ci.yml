@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Lint & Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SNOWFLAKE_ACCOUNT: "dummy_account"
       SNOWFLAKE_USER: "dummy_user"
@@ -20,6 +20,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libicu-dev libxml2-dev libcurl4-openssl-dev libssl-dev \
+            libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev \
+            libpng-dev libtiff5-dev libjpeg-dev \
+            unixodbc unixodbc-dev
+          curl -O https://sfc-repo.snowflakecomputing.com/odbc/linux/3.3.2/snowflake-odbc-3.3.2.x86_64.deb
+          sudo apt-get install -y ./snowflake-odbc-3.3.2.x86_64.deb
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/libodbcinst.so.2 /usr/lib/x86_64-linux-gnu/libodbcinst.so.1
+          sudo bash -c 'printf "[Snowflake]\nDescription=Snowflake ODBC Driver\nDriver=/usr/lib/snowflake/odbc/lib/libSnowflake.so\n" > /etc/odbcinst.ini'
+          echo "LD_LIBRARY_PATH=/usr/lib/snowflake/odbc/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
@@ -33,8 +47,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-r-${{ hashFiles('**/DESCRIPTION', '**/renv.lock') }}
-          restore-keys: ${{ runner.os }}-r-
+          key: ubuntu-24.04-r-4.3.0-v2-${{ hashFiles('**/DESCRIPTION', '**/renv.lock') }}
+          restore-keys: ubuntu-24.04-r-4.3.0-v2-
 
       - name: Install dependencies
         run: |
@@ -42,22 +56,6 @@ jobs:
 
       - name: Lint R code
         run: Rscript -e "lintr::lint_dir('r_analytics')"
-        
-      - name: Install unixODBC and Snowflake Driver
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unixodbc unixodbc-dev
-          curl -O https://sfc-repo.snowflakecomputing.com/odbc/linux/3.3.2/snowflake-odbc-3.3.2.x86_64.deb
-          sudo apt-get install -y ./snowflake-odbc-3.3.2.x86_64.deb
-          
-          # 1. Create a symlink for libodbcinst.so.1
-          sudo ln -s /usr/lib/x86_64-linux-gnu/libodbcinst.so.2 /usr/lib/x86_64-linux-gnu/libodbcinst.so.1
-          
-          # 2. Overwrite odbcinst.ini with the correct format
-          sudo bash -c 'printf "[Snowflake]\nDescription=Snowflake ODBC Driver\nDriver=/usr/lib/snowflake/odbc/lib/libSnowflake.so\n" > /etc/odbcinst.ini'
-          
-          # 3. Set LD_LIBRARY_PATH so the driver can find its dependencies
-          echo "LD_LIBRARY_PATH=/usr/lib/snowflake/odbc/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Run tests
         working-directory: ./tests
@@ -72,7 +70,7 @@ jobs:
 
   docker:
     name: Docker Build Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
